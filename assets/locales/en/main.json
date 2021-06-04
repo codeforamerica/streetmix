@@ -243,17 +243,23 @@
       "email-label": "Email",
       "email-description": "We’ll send you a link to sign in. No password is required.",
       "email-invalid": "Oops! That didn’t look like a valid email address. Please try again.",
+      "password-transition": "👋 {callout} Don’t have a password yet? {signUpLink} with your existing email, and all your streets will carry over.",
+      "password-transition-callout": "Heads up, email users. You now sign in with a password!",
+      "password-transition-sign-up-link-label": "Sign up",
       "social-heading": "or",
       "button": {
         "email": "Continue with email",
         "twitter": "Continue with Twitter",
         "google": "Continue with Google",
-        "facebook": "Continue with Facebook"
+        "facebook": "Continue with Facebook",
+        "magic-link": "Continue with email link",
+        "password": "Continue with password"
       },
       "tos": "By clicking one of these buttons, I agree to the {tosLink} and {privacyLink}.",
       "tos-link-label": "terms of service",
       "privacy-link-label": "privacy policy",
       "loading-message": "Signing you in…",
+      "loading-message-sign-up": "Signing you up…",
       "sent-message-with-email": "We’ve sent an email to {email}. Please follow the instructions there to continue signing in!",
       "email-unreceived": "Didn’t receive it?",
       "resend-email": "Resend email"

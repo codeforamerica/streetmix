@@ -1,6 +1,7 @@
 import { AUTH0_SIGN_IN_CALLBACK_PATH } from './config'
 import { URL_NEW_STREET, URL_EXAMPLE_STREET } from './constants'
 import Authenticate from './auth0'
+import store from '../store'
 
 const AUTH0_SIGN_IN_CALLBACK_URL = new URL(
   AUTH0_SIGN_IN_CALLBACK_PATH,
@@ -54,20 +55,33 @@ export function goGoogleSignIn () {
   })
 }
 
-export function goEmailSignIn (email, callback) {
+export function goUniversalSignIn (loginHint, screenHint) {
   const auth0 = Authenticate()
-  auth0.passwordlessStart(
-    {
-      send: 'link',
-      email: email,
-      connection: 'email',
-      authParams: {
-        redirectUri: AUTH0_SIGN_IN_CALLBACK_URL,
-        responseType: 'code'
-      }
-    },
-    (err, res) => {
-      callback(err, res)
-    }
-  )
+  auth0.authorize({
+    responseType: 'code',
+    redirectUri: AUTH0_SIGN_IN_CALLBACK_URL,
+    loginHint,
+    screenHint,
+    uiLocales: store.getState().locale.locale
+  })
 }
+
+// DEPRECATED: We are disabling magic link login, and will remove it as soon as the dust settles.
+//             See https://github.com/streetmix/streetmix/issues/2023
+// export function goEmailSignIn (email, callback) {
+//   const auth0 = Authenticate()
+//   auth0.passwordlessStart(
+//     {
+//       send: 'link',
+//       email: email,
+//       connection: 'email',
+//       authParams: {
+//         redirectUri: AUTH0_SIGN_IN_CALLBACK_URL,
+//         responseType: 'code'
+//       }
+//     },
+//     (err, res) => {
+//       callback(err, res)
+//     }
+//   )
+// }

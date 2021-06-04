@@ -1,10 +1,13 @@
 import React from 'react'
 import { FormattedMessage } from 'react-intl'
 import {
-  goEmailSignIn,
+  // DEPRECATED: We are disabling magic link login, and will remove it as soon as the dust settles.
+  //             See https://github.com/streetmix/streetmix/issues/2023
+  // goEmailSignIn,
   goTwitterSignIn,
   goFacebookSignIn,
-  goGoogleSignIn
+  goGoogleSignIn,
+  goUniversalSignIn
 } from '../app/routing'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import Icon from '../ui/Icon'
@@ -20,9 +23,11 @@ export default class SignInDialog extends React.Component {
       emailSent: false,
       sendingEmail: false,
       error: false,
-      signingIn: false
+      signingIn: false,
+      signingUp: false
     }
 
+    this.emailFormEl = React.createRef()
     this.emailInputEl = React.createRef()
   }
 
@@ -70,6 +75,25 @@ export default class SignInDialog extends React.Component {
     goTwitterSignIn()
   }
 
+  // DEPRECATED: We are disabling magic link login, and will remove it as soon as the dust settles.
+  //             See https://github.com/streetmix/streetmix/issues/2023
+  // handleMagicLinkClick = (event) => {
+  //   event.preventDefault()
+
+  //   // Since this is not the native form submission, we manually trigger the native validation.
+  //   if (!this.emailFormEl.current.reportValidity()) {
+  //     return
+  //   }
+
+  //   const { email } = this.state
+
+  //   goEmailSignIn(email, this.handleGoEmailSignIn)
+
+  //   this.setState({
+  //     sendingEmail: true
+  //   })
+  // }
+
   handleGoEmailSignIn = (error, res) => {
     if (error) {
       console.error(error)
@@ -92,17 +116,34 @@ export default class SignInDialog extends React.Component {
     })
   }
 
+  handleSignUpClick = (event) => {
+    event.preventDefault()
+
+    const { email } = this.state
+
+    // Note: We intentionally don't validate the input here, even though we pass the email through
+    // to pre-fill the sign-up form, because we don't want to throw up a speed bump. The sign-up
+    // will perform its own validation.
+
+    this.setState({
+      signingUp: true
+    })
+
+    return goUniversalSignIn(email, 'signup')
+  }
+
   handleSubmit = (event) => {
     event.preventDefault()
 
-    // Note: we don't validate the input here;
-    // we let HTML5 <input type="email" required /> do validation
+    const { email } = this.state
 
-    goEmailSignIn(this.state.email, this.handleGoEmailSignIn)
+    // Note: We don't validate the input here. The browser will perform HTML5 native validation.
 
     this.setState({
-      sendingEmail: true
+      signingIn: true
     })
+
+    return goUniversalSignIn(email)
   }
 
   renderErrorMessage = () => {
@@ -117,6 +158,11 @@ export default class SignInDialog extends React.Component {
   }
 
   renderSignInWaiting = () => {
+    const { signingUp } = this.state
+
+    const loadingMessageKey = signingUp ? 'loading-message-sign-up' : 'loading-message'
+    const defaultLoadingMessage = signingUp ? 'Signing you up…' : 'Signing you in…'
+
     return (
       <Dialog>
         {() => (
@@ -124,8 +170,8 @@ export default class SignInDialog extends React.Component {
             <header>
               <h1 className="sign-in-loading-message">
                 <FormattedMessage
-                  id="dialogs.sign-in.loading-message"
-                  defaultMessage="Signing you in…"
+                  id={`dialogs.sign-in.${loadingMessageKey}`}
+                  defaultMessage={defaultLoadingMessage}
                 />
               </h1>
             </header>
@@ -143,6 +189,8 @@ export default class SignInDialog extends React.Component {
   }
 
   renderEmailSent = () => {
+    const { email } = this.state
+
     return (
       <Dialog>
         {() => (
@@ -162,7 +210,7 @@ export default class SignInDialog extends React.Component {
                   defaultMessage="We’ve sent an email to {email}. Please follow the instructions there to continue signing in!"
                   values={{
                     email: (
-                      <span className="sign-in-email">{this.state.email}</span>
+                      <span className="sign-in-email">{email}</span>
                     )
                   }}
                 />
@@ -188,9 +236,16 @@ export default class SignInDialog extends React.Component {
   }
 
   render () {
-    const { sendingEmail, emailSent, signingIn } = this.state
+    const {
+      sendingEmail,
+      emailSent,
+      signingIn,
+      signingUp,
+      email,
+      error
+    } = this.state
 
-    if (sendingEmail || signingIn) {
+    if (sendingEmail || signingIn || signingUp) {
       return this.renderSignInWaiting()
     } else if (emailSent) {
       return this.renderEmailSent()
@@ -216,7 +271,10 @@ export default class SignInDialog extends React.Component {
                 />
               </p>
 
-              <form onSubmit={this.handleSubmit}>
+              <form
+                ref={this.emailFormEl}
+                onSubmit={this.handleSubmit}
+              >
                 <label
                   htmlFor="sign-in-email-input"
                   className="sign-in-email-label"
@@ -231,10 +289,10 @@ export default class SignInDialog extends React.Component {
                   type="email"
                   id="sign-in-email-input"
                   ref={this.emailInputEl}
-                  value={this.state.email}
+                  value={email}
                   className={
                     'sign-in-input ' +
-                    (this.state.error ? 'sign-in-input-error' : '')
+                    (error ? 'sign-in-input-error' : '')
                   }
                   name="email"
                   onChange={this.handleChange}
@@ -242,15 +300,32 @@ export default class SignInDialog extends React.Component {
                   required={true}
                 />
 
-                {this.state.error && this.renderErrorMessage()}
+                {error && this.renderErrorMessage()}
 
                 <p className="sign-in-email-password-note">
-                  <small>
-                    <FormattedMessage
-                      id="dialogs.sign-in.email-description"
-                      defaultMessage="We’ll send you a link to sign in. No password is required."
-                    />
-                  </small>
+                  <FormattedMessage
+                    id="dialogs.sign-in.password-transition"
+                    defaultMessage="👋 {callout} Don’t have a password yet? {signUpLink} with
+                      your existing email, and all your streets will carry over."
+                    values={{
+                      callout: (
+                        <strong>
+                          <FormattedMessage
+                            id="dialogs.sign-in.password-transition-callout"
+                            defaultMessage="Heads up, email users. You now sign in with a password!"
+                          />
+                        </strong>
+                      ),
+                      signUpLink: (
+                        <a onClick={this.handleSignUpClick}>
+                          <FormattedMessage
+                            id="dialogs.sign-in.password-transition-sign-up-link-label"
+                            defaultMessage="Sign up"
+                          />
+                        </a>
+                      )
+                    }}
+                  />
                 </p>
 
                 <button
@@ -258,10 +333,24 @@ export default class SignInDialog extends React.Component {
                   className="button-primary sign-in-button sign-in-email-button"
                 >
                   <FormattedMessage
-                    id="dialogs.sign-in.button.email"
-                    defaultMessage="Continue with email"
+                    id="dialogs.sign-in.button.password"
+                    defaultMessage="Continue with password"
                   />
                 </button>
+
+                {/*
+                  DEPRECATED: We are disabling magic link login, and will remove it as soon as the
+                              dust settles. See https://github.com/streetmix/streetmix/issues/2023
+                */}
+                {/* <button
+                  className="button-tertiary sign-in-button sign-in-email-button"
+                  onClick={this.handleMagicLinkClick}
+                >
+                  <FormattedMessage
+                    id="dialogs.sign-in.button.magic-link"
+                    defaultMessage="Continue with email link"
+                  />
+                </button> */}
               </form>
 
               <div className="sign-in-social-heading">
@@ -306,6 +395,7 @@ export default class SignInDialog extends React.Component {
                   defaultMessage="Continue with Facebook"
                 />
               </button>
+
             </div>
 
             <footer>
