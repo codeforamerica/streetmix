@@ -29,6 +29,9 @@ import store from './store'
 import { initialize } from './app/initialization'
 import App from './app/App'
 
+// third party integrations
+import './integrations/coil'
+
 // Error tracking
 // Load this before all other modules. Only load when run in production.
 if (

@@ -249,6 +249,5 @@ app.get(
 
 // Catch-all, also passes a btpToken for coil integration of streaming payments
 app.use(function (req, res) {
-  res.locals.btpToken = req.session.btpToken
   res.render('main')
 })

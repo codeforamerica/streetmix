@@ -242,8 +242,7 @@ exports.get = async function (req, res) {
     }
   }
 
-  // TODO this function seems like it could be replaced by
-  // sequelize findByPK
+  // this function seems like it could be replaced by sequelize findByPK
   const findUserById = async function (userId) {
     let user
     try {
@@ -291,8 +290,6 @@ exports.get = async function (req, res) {
   }
 
   try {
-    // seems odd to have these two functions chained together, when we
-    // have an ORM that can retrive the user details. is this code still used?
     const result = await findUserById(userId)
     res.status(200).send(asUserJson(result))
   } catch (err) {

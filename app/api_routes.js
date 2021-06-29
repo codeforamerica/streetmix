@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const resources = require('./resources')
 const jwtCheck = require('./authentication')
+const { BTPTokenCheck } = require('./resources/services/integrations/coil')
 /**
  * @swagger
  *
@@ -388,7 +389,13 @@ routes.get('/api/v1/users', cors(), jwtCheck, resources.v1.users.get)
  *           $ref: '#/definitions/User'
  *
  */
-routes.get('/api/v1/users/:user_id', cors(), jwtCheck, resources.v1.users.get)
+routes.get(
+  '/api/v1/users/:user_id',
+  cors(),
+  jwtCheck,
+  BTPTokenCheck,
+  resources.v1.users.get
+)
 routes.put('/api/v1/users/:user_id', cors(), jwtCheck, resources.v1.users.put)
 routes.delete(
   '/api/v1/users/:user_id',
