@@ -1,7 +1,11 @@
 const config = require('config')
 const { v1: uuidv1 } = require('uuid')
 const { isArray } = require('lodash')
-const { ERRORS, asStreetJson } = require('../../../lib/util')
+const {
+  ERRORS,
+  asStreetJson,
+  convertMetricBackToImperialUnits
+} = require('../../../lib/util')
 const logger = require('../../../lib/logger.js')()
 const { User, Street, Sequence } = require('../../db/models')
 
@@ -509,6 +513,11 @@ exports.put = async function (req, res) {
       }
       street.originalStreetId = origStreet.id
     }
+
+    // We're doing stuff in metric on the front-end right now, but the database
+    // is still storing imperial so we convert back
+    street.data.street = convertMetricBackToImperialUnits(street.data.street)
+
     return street.save({ returning: true })
   } // END function - updateStreetData
 
