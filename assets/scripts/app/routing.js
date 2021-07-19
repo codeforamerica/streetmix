@@ -54,6 +54,14 @@ export function goGoogleSignIn () {
   })
 }
 
+export function goPasswordSignIn () {
+  const auth0 = Authenticate()
+  auth0.authorize({
+    redirectUri: AUTH0_SIGN_IN_CALLBACK_URL,
+    responseType: 'code'
+  })
+}
+
 export function goEmailSignIn (email, callback) {
   const auth0 = Authenticate()
   auth0.passwordlessStart(
